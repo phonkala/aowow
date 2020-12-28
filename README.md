@@ -31,6 +31,11 @@ Also, this project is not meant to be used for commercial puposes of any kind!
 
 audio processing may require [lame](https://sourceforge.net/projects/lame/files/lame/3.99/) or [vorbis-tools](https://www.xiph.org/downloads/) (which may require libvorbis (which may require libogg))
 
+On Linux (debian-based) you can install the requirements with the following command:
+```
+sudo apt install php-gd php-xml php-mbstring
+```
+
 
 #### Highly Recommended
 + setting the following configuration values on your TrintyCore server will greatly increase the accuracy of spawn points
@@ -84,13 +89,23 @@ Extract the following directories from the client archives into `setup/mpqdata/`
    .. optionaly (not used in AoWoW):
    > \<localeCode>/Interface/GLUES/LOADINGSCREENS/  
 
+**PAY ATTENTION:** you have to create a directory in `setup/mpqdata/` like `enus` (LOWERCASE) containing the data listed above.  
+For example, you can just copy `Interface` and `DBFilesClient` directory into `setup/mpqdata/enus/` and move `Sound` into `setup/mpqdata/enus`.
+
+You can use MPQExtractor to extract the data, once you installed it succesfully you can use this bash script to make extract the data in the right order.
+- [extract.sh](https://gist.github.com/Helias/d9bd7708e28e9e8dcd5274bd2f3b68bc)
+
 #### 5. Reencode the audio files
 WAV-files need to be reencoded as `ogg/vorbis` and some MP3s may identify themselves as `application/octet-stream` instead of `audio/mpeg`.  
  * [example for WIN](https://gist.github.com/Sarjuuk/d77b203f7b71d191509afddabad5fc9f)  
  * [example for \*nix](https://gist.github.com/Sarjuuk/1f05ef2affe49a7e7ca0fad7b01c081d)
+  
+Note: it will take a long time.
 
 #### 6. Run the initial setup from the CLI
+  
 `php aowow --firstrun`.  
+  
 This should guide you through with minimal input required from your end, but will take some time though, especially compiling the zone-images. Use it to familiarize yourself with the other functions this setup has. Yes, I'm dead serious: *Go read the code!* It will help you understand how to configure AoWoW and keep it in sync with your world database.  
 When you've created your admin account you are done.
 
