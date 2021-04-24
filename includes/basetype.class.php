@@ -1067,8 +1067,6 @@ abstract class Filter
 
                 $this->fiData[$k][$inp] = strtr($val, Filter::$wCards);
             }
-            else if ($val !== '' && $this->checkInput($type, $valid, $val) && $val !== '')
-                $this->fiData[$k][$inp] = $val;
         }
 
         $this->setWeights();
@@ -1159,11 +1157,6 @@ abstract class Filter
     {
         if (empty($this->fiData['v']['wt']) && empty($this->fiData['v']['wtv']))
             return;
-        else if (empty($this->fiData['c']['cr']) || empty($this->fiData['c']['crs']) || empty($this->fiData['c']['crv']))
-        {
-            unset($this->fiData['c']['cr']);
-            unset($this->fiData['c']['crs']);
-            unset($this->fiData['c']['crv']);
 
         $_wt  = &$this->fiData['v']['wt'];
         $_wtv = &$this->fiData['v']['wtv'];

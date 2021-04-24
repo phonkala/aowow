@@ -33,18 +33,18 @@ SqlGen::register(new class extends SetupScript
                 exp,
                 faction,
                 npcflag,
-                IF(`rank` > 4, 0, `rank`),
+                IF(`rank` > 4, 0, `rank`) AS `rank`,
                 dmgSchool,
                 DamageModifier,
                 BaseAttackTime,
                 RangeAttackTime,
-                BaseVariance,
-                RangeVariance,
+                1 AS BaseVariance,
+                1 AS RangeVariance,
                 unit_class,
                 unit_flags, unit_flags2, dynamicflags,
                 family,
-                IFNULL(t.Type, 0),
-                IFNULL(t.Requirement, 0),
+                0, -- IFNULL(t.Type, 0),
+                0, -- IFNULL(t.Requirement, 0),
                 (CASE ct.exp WHEN 0 THEN min.damage_base WHEN 1 THEN min.damage_exp1 ELSE min.damage_exp2 END) AS dmgMin,
                 (CASE ct.exp WHEN 0 THEN max.damage_base WHEN 1 THEN max.damage_exp1 ELSE max.damage_exp2 END) AS dmgMax,
                 min.attackpower AS mleAtkPwrMin,
@@ -54,7 +54,7 @@ SqlGen::register(new class extends SetupScript
                 ct.type,
                 type_flags,
                 lootid, pickpocketloot, skinloot,
-                IFNULL(cts0.Spell, 0), IFNULL(cts1.Spell, 0), IFNULL(cts2.Spell, 0), IFNULL(cts3.Spell, 0), IFNULL(cts4.Spell, 0), IFNULL(cts5.Spell, 0), IFNULL(cts6.Spell, 0), IFNULL(cts7.Spell, 0),
+                0,0,0,0,0,0,0,0, -- IFNULL(cts0.Spell, 0), IFNULL(cts1.Spell, 0), IFNULL(cts2.Spell, 0), IFNULL(cts3.Spell, 0), IFNULL(cts4.Spell, 0), IFNULL(cts5.Spell, 0), IFNULL(cts6.Spell, 0), IFNULL(cts7.Spell, 0),
                 PetSpellDataId,
                 VehicleId,
                 mingold, maxgold,
@@ -65,7 +65,7 @@ SqlGen::register(new class extends SetupScript
                 max.basemana  * ct.ManaModifier AS manaMax,
                 min.basearmor * ct.ArmorModifier AS armorMin,
                 max.basearmor * ct.ArmorModifier AS armorMax,
-                IFNULL(ctr1.Resistance, 0), IFNULL(ctr2.Resistance, 0), IFNULL(ctr3.Resistance, 0), IFNULL(ctr4.Resistance, 0), IFNULL(ctr5.Resistance, 0), IFNULL(ctr6.Resistance, 0),
+                0,0,0,0,0,0, -- IFNULL(ctr1.Resistance, 0), IFNULL(ctr2.Resistance, 0), IFNULL(ctr3.Resistance, 0), IFNULL(ctr4.Resistance, 0), IFNULL(ctr5.Resistance, 0), IFNULL(ctr6.Resistance, 0),
                 RacialLeader,
                 mechanic_immune_mask,
                 flags_extra,
@@ -76,10 +76,10 @@ SqlGen::register(new class extends SetupScript
                 creature_classlevelstats min ON ct.unit_class = min.class AND ct.minlevel = min.level
             JOIN
                 creature_classlevelstats max ON ct.unit_class = max.class AND ct.maxlevel = max.level
-            LEFT JOIN
-                creature_default_trainer cdt ON cdt.CreatureId = ct.entry
-            LEFT JOIN
-                trainer t ON t.Id = cdt.TrainerId
+--            LEFT JOIN
+--                creature_default_trainer cdt ON cdt.CreatureId = ct.entry
+--            LEFT JOIN
+--                trainer t ON t.Id = cdt.TrainerId
             LEFT JOIN
                 creature_template_locale ctl2 ON ct.entry = ctl2.entry AND ctl2.`locale` = "frFR"
             LEFT JOIN
@@ -166,8 +166,12 @@ SqlGen::register(new class extends SetupScript
 
             $lastMax = $newMax;
 
-            foreach ($npcs as $npc)
+            foreach ($npcs as $npc) {
                 DB::Aowow()->query('REPLACE INTO ?_creature VALUES (?a)', array_values($npc));
+                // echo "REPLACE INTO aowow_creature VALUES (?a)\n";
+                // print_r($npc);
+                // break;
+            }
         }
 
         // apply "textureString", "modelId" and "iconSring"
