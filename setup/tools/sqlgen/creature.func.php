@@ -43,8 +43,8 @@ SqlGen::register(new class extends SetupScript
                 unit_class,
                 unit_flags, unit_flags2, dynamicflags,
                 family,
-                0, -- IFNULL(t.Type, 0),
-                0, -- IFNULL(t.Requirement, 0),
+                0 AS `t.Type`, -- IFNULL(t.Type, 0),
+                0 AS `t.Requirement`, -- IFNULL(t.Requirement, 0),
                 (CASE ct.exp WHEN 0 THEN min.damage_base WHEN 1 THEN min.damage_exp1 ELSE min.damage_exp2 END) AS dmgMin,
                 (CASE ct.exp WHEN 0 THEN max.damage_base WHEN 1 THEN max.damage_exp1 ELSE max.damage_exp2 END) AS dmgMax,
                 min.attackpower AS mleAtkPwrMin,
@@ -166,8 +166,9 @@ SqlGen::register(new class extends SetupScript
 
             $lastMax = $newMax;
 
-            foreach ($npcs as $npc)
+            foreach ($npcs as $npc) {
                 DB::Aowow()->query('REPLACE INTO ?_creature VALUES (?a)', array_values($npc));
+            }
         }
 
         // apply "textureString", "modelId" and "iconSring"
