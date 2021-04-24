@@ -214,29 +214,6 @@ class ProfilePage extends GenericPage
     {
         parent::notFound($title ?: Util::ucFirst(Lang::profiler('profiler')), $msg ?: Lang::profiler('notFound', 'profile'));
     }
-
-    private function handleIncompleteData($params, $guid)
-    {
-        if ($this->mode == CACHE_TYPE_TOOLTIP)      // enable tooltip display with basic data we just added
-        {
-            $this->subject = new LocalProfileList(array(['id', $this->subjectGUID]), ['sv' => $params[1]]);
-            if ($this->subject->error)
-                $this->notFound();
-
-            $this->profile = $params;
-        }
-        else                                        // display empty page and queue status
-        {
-            $this->mode = CACHE_TYPE_NONE;
-
-            // queue full fetch
-            $newId = Profiler::scheduleResync(TYPE_PROFILE, $this->realmId, $guid);
-
-            $this->doResync = ['profile', $newId];
-            $this->initialSync();
-        }
-    }
-
     private function handleIncompleteData($params, $guid)
     {
         if ($this->mode == CACHE_TYPE_TOOLTIP)      // enable tooltip display with basic data we just added

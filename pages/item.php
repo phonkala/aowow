@@ -66,9 +66,6 @@ class ItemPage extends genericPage
         if (!is_numeric($param))
             $this->typeId = $this->subject->id;
 
-        if (!is_numeric($param))
-            $this->typeId = $this->subject->id;
-
         $this->name = $this->subject->getField('name', true);
 
         if ($this->mode == CACHE_TYPE_PAGE)
@@ -195,6 +192,7 @@ class ItemPage extends genericPage
         if (!empty($this->subject->getExtendedCost([], $_reqRating)[$this->subject->id]))
         {
             $vendors  = $this->subject->getExtendedCost()[$this->subject->id];
+            $stack    = $this->subject->getField('buyCount');
             $each     = $this->subject->getField('stackable') > 1 ? '[color=q0] ('.Lang::item('each').')[/color]' : null;
             $handled  = [];
             $costList = [];
@@ -218,23 +216,21 @@ class ItemPage extends genericPage
 
                         if ($c < 0)                         // currency items (and honor or arena)
                         {
-                            $currency[] = -$c.','.$qty;
+                            $currency[] = -$c.','.($qty / $stack);
                             $this->extendGlobalIds(TYPE_CURRENCY, -$c);
                         }
                         else if ($c > 0)                    // plain items (item1,count1,item2,count2,...)
                         {
-                            $tokens[$c] = $c.','.$qty;
-                            $this->extendGlobalIds(TYPE_ITEM, $c);
+                            $tokens[$c] = $c.','.($qty / $stack);
                         }
                     }
-
                     // display every cost-combination only once
                     if (in_array(md5(serialize($data)), $handled))
                         continue;
 
                     $handled[] = md5(serialize($data));
 
-                    $cost = isset($data[0]) ? '[money='.$data[0] : '[money';
+                    $cost = isset($data[0]) ? '[money='.($data[0] / $stack) : '[money';
 
                     if ($tokens)
                         $cost .= ' items='.implode(',', $tokens);
@@ -255,25 +251,8 @@ class ItemPage extends genericPage
 
             if ($_reqRating)
             {
-                $res   = [];
-                $i     = 0;
-                $len   = 0;
-                $parts = explode(' ', str_replace('<br>', ' ', sprintf(Lang::item('reqRating', $_reqRating[1]), $_reqRating[0])));
-                foreach ($parts as $p)
-                {
-                    $res[$i][] = $p;
-                    $len += (mb_strlen($p) + 1);
-
-                    if ($len < 30)
-                        continue;
-
-                    $len = 0;
-                    $i++;
-                }
-                foreach ($res as &$r)
-                    $r = implode(' ', $r);
-
-                $infobox[] = implode('[br]', $res);
+                $text = str_replace('<br />', ' ', Lang::item('reqRating', $_reqRating[1], [$_reqRating[0]]));
+                $infobox[] = Lang::breakTextClean($text, 30, false);
             }
         }
 
@@ -306,11 +285,17 @@ class ItemPage extends genericPage
                 $infobox[] = Lang::item('cantDisenchant');
         }
 
-        if (($_flags & ITEM_FLAG_MILLABLE) && $this->subject->getField('requiredSkill') == 773)
+        if (($_flags & ITEM_FLAG_MILLABLE) && $this->subject->getField('requiredSkill') == SKILL_INSCRIPTION)
+        {
             $infobox[] = Lang::item('millable').'&nbsp;([tooltip=tooltip_reqinscription]'.$this->subject->getField('requiredSkillRank').'[/tooltip])';
+            $infobox[] = Lang::formatSkillBreakpoints(Game::getBreakpointsForSkill(SKILL_INSCRIPTION, $this->subject->getField('requiredSkillRank')));
+        }
 
-        if (($_flags & ITEM_FLAG_PROSPECTABLE) && $this->subject->getField('requiredSkill') == 755)
+        if (($_flags & ITEM_FLAG_PROSPECTABLE) && $this->subject->getField('requiredSkill') == SKILL_JEWELCRAFTING)
+        {
             $infobox[] = Lang::item('prospectable').'&nbsp;([tooltip=tooltip_reqjewelcrafting]'.$this->subject->getField('requiredSkillRank').'[/tooltip])';
+            $infobox[] = Lang::formatSkillBreakpoints(Game::getBreakpointsForSkill(SKILL_JEWELCRAFTING, $this->subject->getField('requiredSkillRank')));
+        }
 
         if ($_flags & ITEM_FLAG_DEPRECATED)
             $infobox[] = '[tooltip=tooltip_deprecated]'.Lang::item('deprecated').'[/tooltip]';

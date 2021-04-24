@@ -11,7 +11,7 @@ if (!CLI)
 /* Configure DB connection*/
 /**************************/
 
-function dbconfig()
+function dbconfig() : void
 {
     $databases = ['aowow', 'world', 'auth', 'characters'];
     $AoWoWconf = [];
@@ -24,21 +24,11 @@ function dbconfig()
     );
     $testDB    = function($idx, $name, $dbInfo)
     {
-        $buff    = '['.CLI::bold($idx).'] '.str_pad($name, 17);
-        $errStr  = '';
-        $defPort = ini_get('mysqli.default_port');
-        $port    = 0;
-
-        if (strstr($dbInfo['host'], ':'))
-            [$dbInfo['host'], $port] = explode(':', $dbInfo['host']);
+        $buff = '['.CLI::bold($idx).'] '.str_pad($name, 17);
 
         if ($dbInfo['host'])
         {
-            // test DB
-            if ($link = @mysqli_connect($dbInfo['host'], $dbInfo['user'], $dbInfo['pass'], $dbInfo['db'], $port ?: $defPort))
-                mysqli_close($link);
-            else
-                $errStr = '['.mysqli_connect_errno().'] '.mysqli_connect_error();
+            DB::test($dbInfo, $errStr);
 
             $buff .= $errStr ? CLI::red('ERR   ') : CLI::green('OK    ');
             $buff .= 'mysqli://'.$dbInfo['user'].':'.str_pad('', mb_strlen($dbInfo['pass']), '*').'@'.$dbInfo['host'].($port ? ':'.$port : null).'/'.$dbInfo['db'];
@@ -54,10 +44,8 @@ function dbconfig()
         require 'config/config.php';
 
     foreach ($databases as $idx => $name)
-    {
         if (empty($AoWoWconf[$name]) && $name != 'characters' )
             $AoWoWconf[$name] = array_combine(array_keys($dbFields), ['', '', '', '', '']);
-    }
 
     while (true)
     {
@@ -79,7 +67,7 @@ function dbconfig()
         while (true)
         {
             $inp = ['idx' => ['', true, '/\d/']];
-            if (CLI::readInput($inp, true) && $inp)
+            if (CLI::read($inp, true) && $inp)
             {
                 if ($inp['idx'] >= 0 && $inp['idx'] <= (3 + $nCharDBs))
                 {
@@ -88,7 +76,7 @@ function dbconfig()
                     if ($inp['idx'] == 3 + $nCharDBs)       // add new realmDB
                         $curFields['realmId'] = ['Realm Id',  false, '/[1-9][0-9]*/'];
 
-                    if (CLI::readInput($curFields))
+                    if (CLI::read($curFields))
                     {
                         if ($inp['idx'] == 0 && $curFields)
                             $curFields['prefix'] = 'aowow_';

@@ -11,7 +11,7 @@ SqlGen::register(new class extends SetupScript
 {
     protected $command = 'creature';
 
-    protected $tblDependancyTC = ['creature_template', 'creature_template_locale', 'creature_template_resistance', 'creature_template_spell', 'creature_classlevelstats', 'instance_encounters'];
+    protected $tblDependencyTC = ['creature_template', 'creature_template_locale', 'creature_template_resistance', 'creature_template_spell', 'creature_classlevelstats', 'instance_encounters'];
     protected $dbcSourceFiles  = ['creaturedisplayinfo', 'creaturedisplayinfoextra'];
 
     public function generate(array $ids = []) : bool
@@ -38,8 +38,8 @@ SqlGen::register(new class extends SetupScript
                 DamageModifier,
                 BaseAttackTime,
                 RangeAttackTime,
-                1 AS BaseVariance,
-                1 AS RangeVariance,
+                BaseVariance,
+                RangeVariance,
                 unit_class,
                 unit_flags, unit_flags2, dynamicflags,
                 family,
@@ -54,7 +54,7 @@ SqlGen::register(new class extends SetupScript
                 ct.type,
                 type_flags,
                 lootid, pickpocketloot, skinloot,
-                0,0,0,0,0,0,0,0, -- IFNULL(cts0.Spell, 0), IFNULL(cts1.Spell, 0), IFNULL(cts2.Spell, 0), IFNULL(cts3.Spell, 0), IFNULL(cts4.Spell, 0), IFNULL(cts5.Spell, 0), IFNULL(cts6.Spell, 0), IFNULL(cts7.Spell, 0),
+                IFNULL(cts0.Spell, 0), IFNULL(cts1.Spell, 0), IFNULL(cts2.Spell, 0), IFNULL(cts3.Spell, 0), IFNULL(cts4.Spell, 0), IFNULL(cts5.Spell, 0), IFNULL(cts6.Spell, 0), IFNULL(cts7.Spell, 0),
                 PetSpellDataId,
                 VehicleId,
                 mingold, maxgold,
@@ -65,7 +65,7 @@ SqlGen::register(new class extends SetupScript
                 max.basemana  * ct.ManaModifier AS manaMax,
                 min.basearmor * ct.ArmorModifier AS armorMin,
                 max.basearmor * ct.ArmorModifier AS armorMax,
-                0,0,0,0,0,0, -- IFNULL(ctr1.Resistance, 0), IFNULL(ctr2.Resistance, 0), IFNULL(ctr3.Resistance, 0), IFNULL(ctr4.Resistance, 0), IFNULL(ctr5.Resistance, 0), IFNULL(ctr6.Resistance, 0),
+                IFNULL(ctr1.Resistance, 0), IFNULL(ctr2.Resistance, 0), IFNULL(ctr3.Resistance, 0), IFNULL(ctr4.Resistance, 0), IFNULL(ctr5.Resistance, 0), IFNULL(ctr6.Resistance, 0),
                 RacialLeader,
                 mechanic_immune_mask,
                 flags_extra,
@@ -166,12 +166,8 @@ SqlGen::register(new class extends SetupScript
 
             $lastMax = $newMax;
 
-            foreach ($npcs as $npc) {
+            foreach ($npcs as $npc)
                 DB::Aowow()->query('REPLACE INTO ?_creature VALUES (?a)', array_values($npc));
-                // echo "REPLACE INTO aowow_creature VALUES (?a)\n";
-                // print_r($npc);
-                // break;
-            }
         }
 
         // apply "textureString", "modelId" and "iconSring"

@@ -7725,21 +7725,23 @@ Listview.extraCols = {
             }
 
             if (a.percent >= 1.95) {
-                var acmp = a.percent.toFixed(0);
+                var acmp = a.percent.toFixed(1);
+                // var acmp = a.percent.toFixed(0);
             }
-            else if (a.percent >= 0.195) {
-                acmp = parseFloat(a.percent.toFixed(1));
-            }
+            // else if (a.percent >= 0.195) {
+                // acmp = parseFloat(a.percent.toFixed(1));
+            // }
             else {
                 acmp = parseFloat(a.percent.toFixed(2));
             }
 
             if (b.percent >= 1.95) {
-                var bcmp = b.percent.toFixed(0);
+                var bcmp = b.percent.toFixed(1);
+                // var bcmp = b.percent.toFixed(0);
             }
-            else if (b.percent >= 0.195) {
-                bcmp = parseFloat(b.percent.toFixed(1));
-            }
+            // else if (b.percent >= 0.195) {
+                // bcmp = parseFloat(b.percent.toFixed(1));
+            // }
             else {
                 bcmp = parseFloat(b.percent.toFixed(2));
             }

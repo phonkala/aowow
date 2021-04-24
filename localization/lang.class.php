@@ -128,7 +128,8 @@ class Lang
         return $b;
     }
 
-    public static function trimTextClean(string $text, int $length = 100) : string
+    // truncate string after X chars. If X is inside a word truncate behind it.
+    public static function trimTextClean(string $text, int $len = 100) : string
     {
         // remove line breaks
         $text = strtr($text, ["\n" => ' ', "\r" => ' ']);
@@ -136,13 +137,12 @@ class Lang
         // limit whitespaces to one at a time
         $text = preg_replace('/\s+/', ' ', trim($text));
 
-        // limit previews to 100 chars + whatever it takes to make the last word full
-        if ($length > 0 && mb_strlen($text) > $length)
+        if ($len > 0 && mb_strlen($text) > $len)
         {
             $n = 0;
             $b = [];
             $parts = explode(' ', $text);
-            while ($n < $length && $parts)
+            while ($n < $len && $parts)
             {
                 $_   = array_shift($parts);
                 $n  += mb_strlen($_);
@@ -153,6 +153,39 @@ class Lang
         }
 
         return $text;
+    }
+
+    // add line breaks to string after X chars. If X is inside a word break behind it.
+    public static function breakTextClean(string $text, int $len = 30, bool $asHTML = true) : string
+    {
+        // remove line breaks
+        $text = strtr($text, ["\n" => ' ', "\r" => ' ']);
+
+        // limit whitespaces to one at a time
+        $text = preg_replace('/\s+/', ' ', trim($text));
+
+        $row = [];
+        if ($len > 0 && mb_strlen($text) > $len)
+        {
+            $i = 0;
+            $n = 0;
+            $parts = explode(' ', $text);
+            foreach ($parts as $p)
+            {
+                $row[$i][] = $p;
+                $n += (mb_strlen($p) + 1);
+
+                if ($n < $len)
+                    continue;
+
+                $n = 0;
+                $i++;
+            }
+            foreach ($row as &$r)
+                $r = implode(' ', $r);
+        }
+
+        return implode($asHTML ? '<br />' : '[br]', $row);
     }
 
     public static function sort($prop, $group, $method = SORT_NATURAL)
@@ -402,6 +435,17 @@ class Lang
         $ids = array_keys($tmp);
 
         return implode(', ', $tmp);
+    }
+
+    public static function formatSkillBreakpoints(array $bp, bool $html = false) : string
+    {
+        $tmp = Lang::game('difficulty').Lang::main('colon');
+
+        for ($i = 0; $i < 4; $i++)
+            if (!empty($bp[$i]))
+                $tmp .= $html ? '<span class="r'.($i + 1).'">'.$bp[$i].'</span> ' : '[color=r'.($i + 1).']'.$bp[$i].'[/color] ';
+
+        return trim($tmp);
     }
 
     public static function nf($number, $decimals = 0, $no1k = false)
