@@ -41,18 +41,6 @@ if (!CLI)
             return $result;
         };
 
-        if (isset(FileGen::$cliOpts['help']))
-        {
-            echo "\n";
-            echo "available options for subScript 'simpleImg':\n";
-            echo " --icons          (generates square icons that are used for basicly everything)\n";
-            echo " --glyphs         (decorative tidbit displayed on Infobox for Glyph Spells)\n";
-            echo " --pagetexts      (imagery contained in PageTexts on readable GameObjects or Items)\n";
-            echo " --loadingscreens (loading screens (not used, skipped by default))\n";
-
-            return true;
-        }
-
         $groups   = [];
         $imgPath  = CLISetup::$srcDir.'%sInterface/';
         $destDir  = 'static/images/wow/';
@@ -208,16 +196,16 @@ if (!CLI)
             return !$hasMissing;
         };
 
-        if (isset(FileGen::$cliOpts['icons']))
+        if (CLISetup::getOpt('icons'))
             array_push($groups, 0, 2, 3, 4, 5, 10);
-        if (isset(FileGen::$cliOpts['glyphs']))
+        if (CLISetup::getOpt('glyphs'))
             $groups[] = 1;
-        if (isset(FileGen::$cliOpts['pagetexts']))
+        if (CLISetup::getOpt('pagetexts'))
             array_push($groups, 7, 8, 9);
-        if (isset(FileGen::$cliOpts['loadingscreens']))
+        if (CLISetup::getOpt('loadingscreens'))
             $groups[] = 11;
 
-        // filter by pasaed options
+        // filter by passed options
         if (!$groups)                                       // by default do not generate loadingscreens
             unset($paths[11]);
         else
@@ -358,7 +346,7 @@ if (!CLI)
                                 $img  = $isIcon ? strtolower($name) : $name;
                                 $done = ' - '.str_pad($j.'/'.$nFiles, 12).str_pad('('.number_format($j * 100 / $nFiles, 2).'%)', 9);
 
-                                if (!isset(FileGen::$cliOpts['force']) && file_exists($destDir.$dest.$img.$ext))
+                                if (!CLISetup::getOpt('force') && file_exists($destDir.$dest.$img.$ext))
                                 {
                                     CLI::write($done.' - file '.$dest.$img.$ext.' was already processed');
                                     continue;
@@ -373,8 +361,8 @@ if (!CLI)
                                 /*
                                     ready for some major bullshitery? well, here it comes anyway!
                                     the class-icon tile [idx: 4] isn't 64x64 but 63x64 .. the right side border is 1px short
-                                    so if we don't watch out, the icons start to shift over and show the borderi
-                                    also the icon border is displayced by 1px
+                                    so if we don't watch out, the icons start to shift over and show the border
+                                    also the icon border is displaced by 1px
                                 */
                                 $from = array(
                                     'x' => $borderOffset + 1 + ($tileSize - ($i == 4 ? 1 : 0)) * $x,
@@ -427,7 +415,7 @@ if (!CLI)
                         $j++;
                         $done = ' - '.str_pad($j.'/'.$nFiles, 12).str_pad('('.number_format($j * 100 / $nFiles, 2).'%)', 9);
 
-                        if (!isset(FileGen::$cliOpts['force']) && file_exists($destDir.$dest.$img.$ext))
+                        if (!CLISetup::getOpt('force') && file_exists($destDir.$dest.$img.$ext))
                         {
                             CLI::write($done.' - file '.$dest.$img.$ext.' was already processed');
                             continue;

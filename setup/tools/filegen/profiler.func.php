@@ -313,7 +313,7 @@ if (!CLI)
                     if (!$buff)
                     {
                         // this behaviour is intended, do not create an error
-                        CLI::write('profiler - file datasets/'.User::$localeString.'/p-recipes-'.$file.' has no content => skipping', CLI::LOG_WARN);
+                        CLI::write('profiler - file datasets/'.User::$localeString.'/p-recipes-'.$file.' has no content => skipping', CLI::LOG_INFO);
                         continue;
                     }
 
@@ -375,21 +375,13 @@ if (!CLI)
         /******************/
         $scripts[] = function() use (&$exclusions)
         {
-            $s = count($exclusions);
-            $i = $n = 0;
-            CLI::write('applying '.$s.' baseline exclusions');
+            set_time_limit(2);
+
+            CLI::write('applying '.count($exclusions).' baseline exclusions');
             DB::Aowow()->query('DELETE FROM ?_profiler_excludes WHERE comment = ""');
+
             foreach ($exclusions as $ex)
-            {
                 DB::Aowow()->query('REPLACE INTO ?_profiler_excludes (?#) VALUES (?a)', array_keys($ex), array_values($ex));
-                if ($i >= 500)
-                {
-                    $i = 0;
-                    CLI::write(' * '.$n.' / '.$s.' ('.Lang::nf(100 * $n / $s, 1).'%)');
-                }
-                $i++;
-                $n++;
-            }
 
             // excludes; type => [excludeGroupBit => [typeIds]]
             $excludes = [];

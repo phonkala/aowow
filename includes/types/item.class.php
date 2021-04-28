@@ -509,7 +509,7 @@ class ItemList extends BaseType
                     if ($this->enhanceR['enchantId'.$i] <= 0)
                         continue;
 
-                    $enchant = DB::Aowow()->selectRow('SELECT * FROM ?_itemenchantment WHERE Id = ?d', $this->enhanceR['enchantId'.$i]);
+                    $enchant = DB::Aowow()->selectRow('SELECT * FROM ?_itemenchantment WHERE id = ?d', $this->enhanceR['enchantId'.$i]);
                     if ($this->enhanceR['allocationPct'.$i] > 0)
                     {
                         $amount = intVal($this->enhanceR['allocationPct'.$i] * $this->generateEnchSuffixFactor());
@@ -714,7 +714,7 @@ class ItemList extends BaseType
                                 $vspfArgs = [Lang::item('gemColors', $gemCnd['color'.$i] - 1), Lang::item('gemColors', $gemCnd['cmpColor'.$i] - 1)];
                                 break;
                             default:
-                                continue;
+                                continue 2;
                         }
 
                         $x .= '<span class="q0">'.Lang::achievement('reqNumCrt').' '.Lang::item('gemConditions', $gemCnd['comparator'.$i], $vspfArgs).'</span><br />';
@@ -765,7 +765,7 @@ class ItemList extends BaseType
         // Enchantment
         if (isset($enhance['e']))
         {
-            if ($enchText = DB::Aowow()->selectRow('SELECT * FROM ?_itemenchantment WHERE Id = ?', $enhance['e']))
+            if ($enchText = DB::Aowow()->selectRow('SELECT * FROM ?_itemenchantment WHERE id = ?', $enhance['e']))
                 $x .= '<span class="q2"><!--e-->'.Util::localizedString($enchText, 'name').'</span><br />';
             else
             {
@@ -844,7 +844,7 @@ class ItemList extends BaseType
 
         if ($_ = $this->curTpl['socketBonus'])
         {
-            $sbonus = DB::Aowow()->selectRow('SELECT * FROM ?_itemenchantment WHERE Id = ?d', $_);
+            $sbonus = DB::Aowow()->selectRow('SELECT * FROM ?_itemenchantment WHERE id = ?d', $_);
             $x .= '<span class="q'.($hasMatch ? '2' : '0').'">'.Lang::item('socketBonus', ['<a href="?enchantment='.$_.'">'.Util::localizedString($sbonus, 'name').'</a>']).'</span><br />';
         }
 
@@ -852,8 +852,9 @@ class ItemList extends BaseType
         if ($dur = $this->curTpl['durability'])
             $x .= sprintf(Lang::item('durability'), $dur, $dur).'<br />';
 
+        $jsg = [];
         // required classes
-        if ($classes = Lang::getClassString($this->curTpl['requiredClass'], $jsg, $__))
+        if ($classes = Lang::getClassString($this->curTpl['requiredClass'], $jsg))
         {
             foreach ($jsg as $js)
                 if (empty($this->jsGlobals[TYPE_CLASS][$js]))
@@ -863,7 +864,7 @@ class ItemList extends BaseType
         }
 
         // required races
-        if ($races = Lang::getRaceString($this->curTpl['requiredRace'], $jsg, $__))
+        if ($races = Lang::getRaceString($this->curTpl['requiredRace'], $jsg))
         {
             foreach ($jsg as $js)
                 if (empty($this->jsGlobals[TYPE_RACE][$js]))
@@ -933,9 +934,14 @@ class ItemList extends BaseType
                     if ($cd < $this->curTpl['spellCategoryCooldown'.$j])
                         $cd = $this->curTpl['spellCategoryCooldown'.$j];
 
-                    $cd = $cd < 5000 ? null : ' ('.sprintf(Lang::game('cooldown'), Util::formatTime($cd)).')';
+                    $extra = [];
+                    if ($cd >= 5000)
+                        $extra[] = Lang::game('cooldown', [Util::formatTime($cd, true)]);
+                    if ($this->curTpl['spellTrigger'.$j] == 2)
+                        if ($ppm = $this->curTpl['spellppmRate'.$j])
+                            $extra[] = Lang::spell('ppm', [$ppm]);
 
-                    $itemSpellsAndTrigger[$this->curTpl['spellId'.$j]] = [$this->curTpl['spellTrigger'.$j], $cd];
+                    $itemSpellsAndTrigger[$this->curTpl['spellId'.$j]] = [$this->curTpl['spellTrigger'.$j], $extra ? ' ('.implode(', ', $extra).')' : ''];
                 }
             }
 
@@ -979,10 +985,31 @@ class ItemList extends BaseType
         $pieces  = [];
         if ($setId = $this->getField('itemset'))
         {
-            // while Ids can technically be used multiple times the only difference in data are the items used. So it doesn't matter what we get
-            $itemset = new ItemsetList(array(['id', $setId]));
+            $condition = [
+                ['refSetId', $setId],
+             // ['quality',  $this->curTpl['quality']],
+                ['minLevel', $this->curTpl['itemLevel'], '<='],
+                ['maxLevel', $this->curTpl['itemLevel'], '>=']
+            ];
+
+            $itemset = new ItemsetList($condition);
             if (!$itemset->error && $itemset->pieceToSet)
             {
+                // handle special cases where:
+                // > itemset has items of different qualities (handled by not limiting for this in the initial query)
+                // > itemset is virtual and multiple instances have the same itemLevel but not quality (filter below)
+                if ($itemset->getMatches() > 1)
+                {
+                    foreach ($itemset->iterate() as $id => $__)
+                    {
+                        if ($itemset->getField('quality') == $this->curTpl['quality'])
+                        {
+                            $itemset->pieceToSet = array_filter($itemset->pieceToSet, function($x) use ($id) { return $id == $x; });
+                            break;
+                        }
+                    }
+                }
+
                 $pieces = DB::Aowow()->select('
                     SELECT b.id AS ARRAY_KEY, b.name_loc0, b.name_loc2, b.name_loc3, b.name_loc4, b.name_loc6, b.name_loc8, GROUP_CONCAT(a.id SEPARATOR \':\') AS equiv
                     FROM   ?_items a, ?_items b
@@ -996,7 +1023,7 @@ class ItemList extends BaseType
 
                 $xSet = '<br /><span class="q">'.Lang::item('setName', ['<a href="?itemset='.$itemset->id.'" class="q">'.$itemset->getField('name', true).'</a>', 0, count($pieces)]).'</span>';
 
-                if ($skId = $itemset->getField('skillId'))      // bonus requires skill to activate
+                if ($skId = $itemset->getField('skillId'))  // bonus requires skill to activate
                 {
                     $xSet .= '<br />'.sprintf(Lang::game('requires'), '<a href="?skills='.$skId.'" class="q1">'.SkillList::getName($skId).'</a>');
 
@@ -1152,7 +1179,7 @@ class ItemList extends BaseType
         // is it available for this item? .. does it even exist?!
         if (empty($this->enhanceR))
             if (DB::World()->selectCell('SELECT 1 FROM item_enchantment_template WHERE entry = ?d AND ench = ?d', abs($this->getField('randomEnchant')), abs($randId)))
-                if ($_ = DB::Aowow()->selectRow('SELECT * FROM ?_itemrandomenchant WHERE Id = ?d', $randId))
+                if ($_ = DB::Aowow()->selectRow('SELECT * FROM ?_itemrandomenchant WHERE id = ?d', $randId))
                     $this->enhanceR = $_;
 
         return !empty($this->enhanceR);
@@ -1161,7 +1188,7 @@ class ItemList extends BaseType
     // from Trinity
     public function generateEnchSuffixFactor()
     {
-        $rpp = DB::Aowow()->selectRow('SELECT * FROM ?_itemrandomproppoints WHERE Id = ?', $this->curTpl['itemLevel']);
+        $rpp = DB::Aowow()->selectRow('SELECT * FROM ?_itemrandomproppoints WHERE id = ?', $this->curTpl['itemLevel']);
         if (!$rpp)
             return 0;
 
@@ -1240,15 +1267,8 @@ class ItemList extends BaseType
             $this->itemMods[$this->id] = [];
 
             foreach (Game::$itemMods as $mod)
-            {
-                if (isset($this->curTpl[$mod]) && ($_ = floatVal($this->curTpl[$mod])))
-                {
-                    if (!isset($this->itemMods[$this->id][$mod]))
-                        $this->itemMods[$this->id][$mod] = 0;
-
-                    $this->itemMods[$this->id][$mod] += $_;
-                }
-            }
+                if ($_ = floatVal($this->curTpl[$mod]))
+                    Util::arraySumByKey($this->itemMods[$this->id], [$mod => $_]);
 
             // fetch and add socketbonusstats
             if (!empty($this->json[$this->id]['socketbonus']))
@@ -1275,7 +1295,7 @@ class ItemList extends BaseType
                     if ($item > 0)                          // apply socketBonus
                         $this->json[$item]['socketbonusstat'] = array_filter($eStats[$eId]);
                     else /* if ($item < 0) */               // apply gemEnchantment
-                        Util::arraySumByKey($this->json[-$item][$mod], array_filter($eStats[$eId]));
+                        Util::arraySumByKey($this->json[-$item], array_filter($eStats[$eId]));
                 }
             }
         }
@@ -2349,7 +2369,7 @@ class ItemListFilter extends Filter
         {
             // todo: do something sensible..
             // // todo (med): get the avgbuyout into the listview
-            // if ($_ = DB::Characters()->select('SELECT ii.itemEntry AS ARRAY_KEY, AVG(ah.buyoutprice / ii.count) AS buyout FROM auctionhouse ah JOIN item_instance ii ON ah.itemguid = ii.guid GROUP BY ii.itemEntry HAVING avgbuyout '.$cr[1].' ?f', $c[1]))
+            // if ($_ = DB::Characters()->select('SELECT ii.itemEntry AS ARRAY_KEY, AVG(ah.buyoutprice / ii.count) AS buyout FROM auctionhouse ah JOIN item_instance ii ON ah.itemguid = ii.guid GROUP BY ii.itemEntry HAVING buyout '.$cr[1].' ?f', $c[1]))
                 // return ['i.id', array_keys($_)];
             // else
                 // return [0];
