@@ -245,7 +245,7 @@ class Game
     public static function getWorldPosForGUID(int $type, int ...$guids) : array
     {
         $result = [];
-
+die();
         switch ($type)
         {
             case TYPE_NPC:
