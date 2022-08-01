@@ -63,7 +63,7 @@ endif;
 if (CFG_ANALYTICS_USER):
 ?>
 <!-- Global Site Tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=<?=CFG_ANALYTICS_USER; ?>"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
